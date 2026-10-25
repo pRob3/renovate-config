@@ -1,0 +1,35 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "How dependency versions move in the slafhas and Grundkoll repositories. Each repository's renovate.json extends this preset and adds its own groups: the couplings differ per stack (EF Core and Npgsql, tiptap, tailwind), and each was learned in its own repository, so each stays there with its reason.",
+    "This preset replaced Dependabot's version and security updates in those repositories. It keeps what their dependabot.yml files did -- one round a week, Monday, Stockholm time; majors arrive as their own pull request unless a repository holds them back; GitHub Actions minors and patches in one pull request -- and adds one thing Dependabot could not do on GitHub's free plan: a security fix merges itself once every check is green.",
+    "It is not the 2Fivers preset. That one merges tooling by itself because `pnpm check` exercises every tool in full; nothing in these repositories proves tooling that way, so here only security fixes merge themselves.",
+    "Renovate works at night: the weekly round and every automerge happen between 02:00 and 06:00. updateNotScheduled is false, so an open branch is rebased only in that window. That is what Dependabot's `rebase-strategy: disabled` was for: a push to the base branch used to rebase every open dependency pull request and start a CI run for each, none of them about what was pushed. A branch that is wanted sooner is rebased by ticking its box in the pull request.",
+    "Merging deploys nothing. Only a published GitHub release deploys these repositories, so a merged update waits on the default branch for a release, made by a person or by the release bot."
+  ],
+  "extends": ["config:recommended"],
+  "timezone": "Europe/Stockholm",
+  "semanticCommits": "disabled",
+  "commitMessageLowerCase": "never",
+  "labels": ["dependencies"],
+  "schedule": ["* 2-5 * * 1"],
+  "updateNotScheduled": false,
+  "automergeSchedule": ["* 2-5 * * *"],
+  "minimumReleaseAge": "2 days",
+  "minimumReleaseAgeBehaviour": "timestamp-optional",
+  "vulnerabilityAlerts": {
+    "description": "Renovate is the CVE channel. It reads the repository's Dependabot alerts -- which stay on for that reason, while Dependabot's own security updates are off -- and opens a pull request at once, outside the schedule and the two-day minimumReleaseAge, with the lockfile updated. AUTOMERGED once every check is green, inside automergeSchedule like every other automerge: Renovate skips `schedule` for a vulnerability fix but still checks automergeSchedule, so a fix opened in the afternoon merges that night. The setting is forced over every packageRule, so a fix that is a major, or one a repository holds back, merges itself too; with vulnerabilityFixStrategy `lowest` that happens only when no minor or patch carries the fix. A human can still stop one by closing its pull request.",
+    "enabled": true,
+    "labels": ["security"],
+    "automerge": true
+  },
+  "osvVulnerabilityAlerts": true,
+  "packageRules": [
+    {
+      "description": "GitHub Actions minors and patches in one pull request, as every repository's dependabot.yml grouped them. Majors arrive on their own.",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "github actions"
+    }
+  ]
+}
